@@ -1,5 +1,3 @@
-crypto = require('crypto');
-
 exports.create = function(name) {
     lastTime = new Date();
     sessionId = Math.floor(Math.random()*999999999);

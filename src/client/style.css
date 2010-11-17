@@ -1,3 +1,7 @@
 input[type="submit"] {
   border: 1px solid black;
 }
+
+#status {
+  display: none;
+}

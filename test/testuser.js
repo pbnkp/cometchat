@@ -2,7 +2,6 @@ require('./common');
 
 sys = require('sys');
 user = require('user');
-assert = require('assert');
 
 username = "test";
 testuser = user.create(username);

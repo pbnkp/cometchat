@@ -3,7 +3,6 @@ require('./common');
 sys = require('sys');
 channel = require('channel');
 user = require('user');
-assert = require('assert');
 
 var chanName = "testChannel";
 var testChannel = channel.create(chanName);

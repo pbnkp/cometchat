@@ -1,4 +1,5 @@
-require.paths.unshift("../src");
+require('./common');
+
 sys = require('sys');
 channel = require('channel');
 user = require('user');

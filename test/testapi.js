@@ -54,9 +54,9 @@ function Client(host, cb) {
       client = http.createClient(port, host);
   api.listen(port, host, cb);
 
-  self.get = function(url, cb) {
+  self.request = function(method, url, cb) {
     var result = "";
-        req = client.request("GET", url);
+        req = client.request(method, url);
     req.end();
     req.on("response", function(res) {
       res.on("data", function(chunk) {
@@ -67,48 +67,63 @@ function Client(host, cb) {
         cb(null, res);
       });
     });
+  }
+  self.get = function(url, cb) {
+      self.request("GET", url, cb);
+  };
+  self.post = function(url, cb) {
+      self.request("POST", url, cb);
   };
   self.close = function() {
     api.close();
   };
 }
 
-// Connect to api
-  // Request /
-  // Get back html
+function getClient() {
+    var that = this;
+    var client = new Client("localhost", function() {
+      that.callback(null, client);
+    });
+}
+
+function assertStatus(code) {
+    return function (e, res) {
+        assert.equal (res.statusCode, code);
+    };
+}
+
+function contextFetch(client) {
+    var request = this.context.name.split(/ +/);
+    client[request[0].toLowerCase()](request[1], this.callback);
+}
 
 vows.describe('Fetching Static').addBatch({
-    "Create the client" : {
-      topic : function() {
-        var that = this;
-        var client = new Client("localhost", function() {
-          that.callback(null, client);
-        });
-      },
+    "API" : {
+      topic : getClient,
       "GET /" : {
-          topic : function(client) { 
-              client.get("/", this.callback);
-          },
-          "Should return 200 OK" : function(err,res) {
-              assert.equal(res.statusCode, 200);
-          },
+          topic : contextFetch,
+          "Should return 200 OK" : assertStatus(200),
           "Should contain HTML" : function(err,res) {
               assert.match(res.data, /<html>/);
               assert.match(res.data, /<\/html>/);
           }
       },
       "GET /index.html" : {
-          topic : function(client) { 
-              client.get("/", this.callback);
-          },
-          "Should return 200 OK" : function(err,res) {
-              assert.equal(res.statusCode, 200);
-          },
+          topic : contextFetch,
+          "Should return 200 OK" : assertStatus(200),
           "Should contain HTML" : function(err,res) {
               assert.match(res.data, /<html>/);
               assert.match(res.data, /<\/html>/);
           }
       },
+      "GET /notfound" : {
+          topic : contextFetch,
+          "Should return 404 Not Found" : assertStatus(404)
+      },
+      //"POST /" : {
+      //    topic : contextFetch,
+      //    "Should return 405 Method Not Alloed" : assertStatus(405)
+      //},
       teardown : function(client) {
         setTimeout(client.close, 1000);
       }

@@ -69,14 +69,14 @@ var makeServer = function() {
         if(path && path.match("^"+htdocs) == htdocs) {
             fs.readFile(path, function(err, data) {
               if(err) {
-                sys.puts("Error reading " + path);
+                //sys.puts("Error reading " + path);
                 res.sendNotFound();
               } else {
                 res.send(200, srv.mime(path), data);
               }
             });
         } else {
-            sys.puts("No match on " + path + " for " + htdocs);
+            //sys.puts("No match on " + path + " for " + htdocs);
             res.sendNotFound();
         }
       });

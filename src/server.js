@@ -3,15 +3,19 @@ var createServer = require('http').createServer;
 var fs = require('fs');
 var urlParse = require('url').parse;
 
-var server = function() {
+var path = require('path');
+var dn = path.dirname;
+var basedir = dn(dn(__filename));
+
+var makeServer = function() {
   var getMap = {};
   var postMap = {};
-  var htdocs = fs.realpathSync("./client");
-  sys.puts("HTDOCS: " + htdocs);
+  var htdocs = fs.realpathSync( basedir + "/src/client");
+  //sys.puts("HTDOCS: " + htdocs);
 
   srv = createServer(function(req, res) {
     path = urlParse(req.url).pathname;
-    sys.puts("Request: " + path);
+    //sys.puts("Request: " + path);
     var urlMap = {};
     if(req.method === "GET") {
       urlMap = getMap;
@@ -22,15 +26,15 @@ var server = function() {
     if(callback) {
       callback(req, res);
     } else {
-      srv.serveStatic(path)(req, res);
+      srv.staticServer(path)(req, res);
     }
   });
 
   srv.setHandler = function(method, path, callback) {
-    if(method = "GET") {
+    if(method === "GET") {
       getMap[path] = callback;
     }
-    if(method = "POST") {
+    if(method === "POST") {
       postMap[path] = callback;
     }
   };
@@ -44,7 +48,7 @@ var server = function() {
     }[filename.substring(filename.lastIndexOf(".")).toLowerCase()] || "application/octet-stream";
   }
 
-  srv.serveStatic = function(relPath) {
+  srv.staticServer = function(relPath) {
     return function(req, res) {
       res.send = function(code, mime, data) {
         res.writeHead(
@@ -60,7 +64,7 @@ var server = function() {
         res.send(404, "text/html", "Error 404 - Not Found");
       };
       path = htdocs + "/" + relPath;
-      sys.puts("Serving static: " + path);
+      //sys.puts("Serving static: " + path);
       fs.realpath(path, function(err, path) {
         if(path && path.match("^"+htdocs) == htdocs) {
             fs.readFile(path, function(err, data) {
@@ -78,16 +82,22 @@ var server = function() {
       });
     }
   };
-
+  srv.setHandler("GET", "/", srv.staticServer("index.html"));
   return srv;
-}();
-
-server.setHandler("GET", "/", server.serveStatic("index.html"));
-
-exports.listen = function(port, host) {
-  server.listen(port, host);
 };
 
+var server = makeServer();
+
+exports.listen = function(port, host, cb) {
+  cb = cb || function() {};
+  server.listen(port, host, cb);
+};
+
+exports.stop = function() {
+  server.close();
+}
+
+exports.makeServer = makeServer;
 
 PORT = 8080;
 HOST = "localhost";

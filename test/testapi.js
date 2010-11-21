@@ -129,11 +129,11 @@ vows.describe('Fetching Static').addBatch({
       },
       "POST /" : {
           topic : contextFetch,
-          "Should return 405 Method Not Alloed" : assertStatus(405)
+          "Should return 405 Method Not Allowed" : assertStatus(405)
       },
       "POST /index.html" : {
           topic : contextFetch,
-          "Should return 405 Method Not Alloed" : assertStatus(405)
+          "Should return 405 Method Not Allowed" : assertStatus(405)
       },
       teardown : function(client) {
         setTimeout(client.close, 1000);

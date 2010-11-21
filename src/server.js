@@ -65,6 +65,11 @@ var makeServer = function() {
 
   srv.staticServer = function(relPath) {
     return function(req, res) {
+      // Only GETs on static resources really make sense
+      if(req.method !== "GET") {
+        errorHandlers[405](req,res);
+        return;
+      }
       path = htdocs + "/" + relPath;
       //sys.puts("Serving static: " + path);
       fs.realpath(path, function(err, path) {

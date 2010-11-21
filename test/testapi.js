@@ -116,6 +116,13 @@ vows.describe('Fetching Static').addBatch({
               assert.match(res.data, /<\/html>/);
           }
       },
+      "GET /style.css" : {
+          topic : contextFetch,
+          "Should return 200 OK" : assertStatus(200),
+          "Should contain CSS" : function(err,res) {
+              assert.match(res.data, /display:/);
+          }
+      },
       "GET /notfound" : {
           topic : contextFetch,
           "Should return 404 Not Found" : assertStatus(404)

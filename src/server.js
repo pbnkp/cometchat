@@ -40,7 +40,7 @@ var makeServer = function() {
         cb = errorHandlers[405];
       }
     } else {
-      cb = errorHandlers[404];
+      cb = srv.staticServer(path)
     }
 
     cb(req, res);
@@ -85,7 +85,6 @@ var makeServer = function() {
     }
   };
   srv.setHandler("GET", "/", srv.staticServer("index.html"));
-  srv.setHandler("GET", "/index.html", srv.staticServer("index.html"));
   return srv;
 };
 

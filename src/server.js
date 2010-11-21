@@ -8,35 +8,50 @@ var dn = path.dirname;
 var basedir = dn(dn(__filename));
 
 var makeServer = function() {
-  var getMap = {};
-  var postMap = {};
-  var htdocs = fs.realpathSync( basedir + "/src/client");
+  var handlers = {},
+      errorHandlers = {},
+      htdocs = fs.realpathSync( basedir + "/src/client");
   //sys.puts("HTDOCS: " + htdocs);
 
+  errorHandlers[404] = function(req, res) {
+      res.send(404, "text/html", "Error 404 - Not Found");
+  }
+  errorHandlers[405] = function(req, res) {
+      res.send(405, "text/html", "Error 405 - Method Not Allowed");
+  }
+
   srv = createServer(function(req, res) {
+    res.send = function(code, mime, data) {
+      res.writeHead(
+        code, {
+          "Content-Type": mime,
+          "Content-Length": data.length
+        }
+      );
+      res.write(data);
+      res.end();
+    };
+
     path = urlParse(req.url).pathname;
-    //sys.puts("Request: " + path);
-    var urlMap = {};
-    if(req.method === "GET") {
-      urlMap = getMap;
-    } else if(req.method === "POST") {
-      urlMap = postMap;
-    }
-    callback = urlMap[path];
-    if(callback) {
-      callback(req, res);
+    if(handlers[path]) {
+      if(handlers[path][req.method]) {
+        cb = handlers[path][req.method];
+      } else {
+        cb = errorHandlers[405];
+      }
     } else {
-      srv.staticServer(path)(req, res);
+      cb = errorHandlers[404];
     }
+
+    cb(req, res);
   });
 
-  srv.setHandler = function(method, path, callback) {
-    if(method === "GET") {
-      getMap[path] = callback;
+  srv.setHandler = function(method, path, cb) {
+    if(!handlers[path]) {
+      handlers[path] = {};
     }
-    if(method === "POST") {
-      postMap[path] = callback;
-    }
+
+    handlers[path][method] = cb;
   };
 
   srv.mime = function(filename) {
@@ -50,19 +65,6 @@ var makeServer = function() {
 
   srv.staticServer = function(relPath) {
     return function(req, res) {
-      res.send = function(code, mime, data) {
-        res.writeHead(
-          code, {
-            "Content-Type": mime,
-            "Content-Length": data.length
-          }
-        );
-        res.write(data);
-        res.end();
-      };
-      res.sendNotFound = function() {
-        res.send(404, "text/html", "Error 404 - Not Found");
-      };
       path = htdocs + "/" + relPath;
       //sys.puts("Serving static: " + path);
       fs.realpath(path, function(err, path) {
@@ -70,19 +72,20 @@ var makeServer = function() {
             fs.readFile(path, function(err, data) {
               if(err) {
                 //sys.puts("Error reading " + path);
-                res.sendNotFound();
+                errorHandlers[404](req,res);
               } else {
                 res.send(200, srv.mime(path), data);
               }
             });
         } else {
             //sys.puts("No match on " + path + " for " + htdocs);
-            res.sendNotFound();
+            errorHandlers[404](req,res);
         }
       });
     }
   };
   srv.setHandler("GET", "/", srv.staticServer("index.html"));
+  srv.setHandler("GET", "/index.html", srv.staticServer("index.html"));
   return srv;
 };
 

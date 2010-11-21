@@ -98,7 +98,7 @@ function contextFetch(client) {
 }
 
 vows.describe('Fetching Static').addBatch({
-    "API" : {
+    "" : {
       topic : getClient,
       "GET /" : {
           topic : contextFetch,
@@ -120,10 +120,10 @@ vows.describe('Fetching Static').addBatch({
           topic : contextFetch,
           "Should return 404 Not Found" : assertStatus(404)
       },
-      //"POST /" : {
-      //    topic : contextFetch,
-      //    "Should return 405 Method Not Alloed" : assertStatus(405)
-      //},
+      "POST /" : {
+          topic : contextFetch,
+          "Should return 405 Method Not Alloed" : assertStatus(405)
+      },
       teardown : function(client) {
         setTimeout(client.close, 1000);
       }

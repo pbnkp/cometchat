@@ -65,11 +65,6 @@ var makeServer = function() {
 
   srv.staticServer = function(relPath) {
     return function(req, res) {
-      // Only GETs on static resources really make sense
-      if(req.method !== "GET") {
-        errorHandlers[405](req,res);
-        return;
-      }
       path = htdocs + "/" + relPath;
       //sys.puts("Serving static: " + path);
       fs.realpath(path, function(err, path) {
@@ -79,6 +74,11 @@ var makeServer = function() {
                 //sys.puts("Error reading " + path);
                 errorHandlers[404](req,res);
               } else {
+                // Only GETs on static resources really make sense
+                if(req.method !== "GET") {
+                  errorHandlers[405](req,res);
+                  return;
+                }
                 res.send(200, srv.mime(path), data);
               }
             });

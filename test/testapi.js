@@ -92,16 +92,18 @@ function assertStatus(code) {
     };
 }
 
-function contextFetch(client) {
-    var request = this.context.name.split(/ +/);
-    client[request[0].toLowerCase()](request[1], this.callback);
+function contextFetch() {
+    return function(client) {
+      var request = this.context.name.split(/ +/);
+      client[request[0].toLowerCase()](request[1], this.callback);
+    }
 }
 
 vows.describe('Fetching Static').addBatch({
     "" : {
       topic : getClient,
       "GET /" : {
-          topic : contextFetch,
+          topic : contextFetch(),
           "Should return 200 OK" : assertStatus(200),
           "Should contain HTML" : function(err,res) {
               assert.match(res.data, /<html>/);
@@ -109,7 +111,7 @@ vows.describe('Fetching Static').addBatch({
           }
       },
       "GET /index.html" : {
-          topic : contextFetch,
+          topic : contextFetch(),
           "Should return 200 OK" : assertStatus(200),
           "Should contain HTML" : function(err,res) {
               assert.match(res.data, /<html>/);
@@ -117,22 +119,26 @@ vows.describe('Fetching Static').addBatch({
           }
       },
       "GET /style.css" : {
-          topic : contextFetch,
+          topic : contextFetch(),
           "Should return 200 OK" : assertStatus(200),
           "Should contain CSS" : function(err,res) {
               assert.match(res.data, /display:/);
           }
       },
       "GET /notfound" : {
-          topic : contextFetch,
+          topic : contextFetch(),
+          "Should return 404 Not Found" : assertStatus(404)
+      },
+      "POST /notfound" : {
+          topic : contextFetch(),
           "Should return 404 Not Found" : assertStatus(404)
       },
       "POST /" : {
-          topic : contextFetch,
+          topic : contextFetch(),
           "Should return 405 Method Not Allowed" : assertStatus(405)
       },
       "POST /index.html" : {
-          topic : contextFetch,
+          topic : contextFetch(),
           "Should return 405 Method Not Allowed" : assertStatus(405)
       },
       teardown : function(client) {

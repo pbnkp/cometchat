@@ -1,4 +1,4 @@
-var sys = require('sys');
+var util = require('util');
 var createServer = require('http').createServer;
 var fs = require('fs');
 var urlParse = require('url').parse;
@@ -11,7 +11,7 @@ var makeServer = function() {
   var handlers = {},
       errorHandlers = {},
       htdocs = fs.realpathSync( basedir + "/src/client");
-  //sys.puts("HTDOCS: " + htdocs);
+  //util.puts("HTDOCS: " + htdocs);
 
   errorHandlers[404] = function(req, res) {
       res.send(404, "text/html", "Error 404 - Not Found");
@@ -66,12 +66,12 @@ var makeServer = function() {
   srv.staticServer = function(relPath) {
     return function(req, res) {
       path = htdocs + "/" + relPath;
-      //sys.puts("Serving static: " + path);
+      //util.puts("Serving static: " + path);
       fs.realpath(path, function(err, path) {
         if(path && path.match("^"+htdocs) == htdocs) {
             fs.readFile(path, function(err, data) {
               if(err) {
-                //sys.puts("Error reading " + path);
+                //util.puts("Error reading " + path);
                 errorHandlers[404](req,res);
               } else {
                 // Only GETs on static resources really make sense
@@ -83,7 +83,7 @@ var makeServer = function() {
               }
             });
         } else {
-            //sys.puts("No match on " + path + " for " + htdocs);
+            //util.puts("No match on " + path + " for " + htdocs);
             errorHandlers[404](req,res);
         }
       });

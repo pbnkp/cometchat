@@ -54,9 +54,12 @@ function Client(host, cb) {
       client = http.createClient(port, host);
   api.listen(port, host, cb);
 
-  self.request = function(method, url, cb) {
+  self.request = function(method, url, data, cb) {
     var result = "";
         req = client.request(method, url);
+    if(data) {
+        req.write(data);
+    }
     req.end();
     req.on("response", function(res) {
       res.on("data", function(chunk) {
@@ -68,11 +71,11 @@ function Client(host, cb) {
       });
     });
   }
-  self.get = function(url, cb) {
-      self.request("GET", url, cb);
+  self.get = function(url, data, cb) {
+      self.request("GET", url, data, cb);
   };
-  self.post = function(url, cb) {
-      self.request("POST", url, cb);
+  self.post = function(url, data, cb) {
+      self.request("POST", url, data, cb);
   };
   self.close = function() {
     api.close();
@@ -92,10 +95,13 @@ function assertStatus(code) {
     };
 }
 
-function contextFetch() {
+function contextFetch(postdata) {
     return function(client) {
       var request = this.context.name.split(/ +/);
-      client[request[0].toLowerCase()](request[1], this.callback);
+      if(postdata) {
+          postdata = JSON.stringify(postdata);
+      }
+      client[request[0].toLowerCase()](request[1], postdata, this.callback);
     }
 }
 
@@ -140,6 +146,38 @@ vows.describe('Fetching Static').addBatch({
       "POST /index.html" : {
           topic : contextFetch(),
           "Should return 405 Method Not Allowed" : assertStatus(405)
+      },
+      teardown : function(client) {
+        setTimeout(client.close, 1000);
+      }
+    }
+}).export(module);
+
+vows.describe('User Session').addBatch({
+    "" : {
+      topic : getClient,
+      "POST /users" : {
+          topic : contextFetch({name : "tester"}),
+          "Returns 200 OK" : assertStatus(200),
+          "Returns a JSON object" : function(err,res) {
+              var data = JSON.parse(res.data);
+              assert.isObject(data);
+          },
+          "Response contains a valid session id" : function(err,res) {
+              var data = JSON.parse(res.data);
+              assert.include(data, 'sessid');
+              assert.isNumber(data.sessid);
+          },
+          "Response contains the requested name" : function(err,res) {
+              var data = JSON.parse(res.data);
+              assert.include(data, 'name');
+              assert.equal(data.name, "tester");
+          },
+          "Response contains a proper last timestamp" : function(err,res) {
+              var data = JSON.parse(res.data);
+              assert.include(data, 'lastTime');
+              assert.isNumber(data.lastTime);
+          }
       },
       teardown : function(client) {
         setTimeout(client.close, 1000);

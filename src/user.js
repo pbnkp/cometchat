@@ -1,18 +1,29 @@
 exports.create = function(name) {
-    lastTime = new Date();
-    sessionId = Math.floor(Math.random()*999999999);
-    return {
+    var sessid = Math.floor(Math.random()*999999999);
+    var User = function() {
+        var that = this;
+        this.sessid = sessid;
+        this.name = name;
+        this.lastTime = (new Date()).getTime();
+    }
+
+    User.prototype = {
         getName: function() {
-            return name;
+            return this.name;
         },
         getLastTime: function() {
-            return lastTime;
+            return this.lastTime;
         },
         poke: function() {
-            lastTime = new Date();
+            this.lastTime = (new Date()).getTime();
         },
         getSessionId: function() {
-            return sessionId;
+            return this.sessionId;
+        },
+        getInfo: function() {
+            return this.info;
         }
-    }
+    };
+
+    return new User();
 }

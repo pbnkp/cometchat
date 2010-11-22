@@ -32,6 +32,17 @@ var makeServer = function() {
       res.end();
     };
 
+    res.sendJSON = function(code, data) {
+      data = JSON.stringify(data)
+      res.writeHead(
+        code, {
+          "Content-Type": "application/json",
+          "Content-Length": data.length
+        }
+      );
+      res.end(data);
+    };
+
     path = urlParse(req.url).pathname;
     if(handlers[path]) {
       if(handlers[path][req.method]) {
@@ -89,7 +100,20 @@ var makeServer = function() {
       });
     }
   };
+
+  srv.userHandler = function(req, res) {
+    req.data = "";
+    req.on("data", function(chunk) {
+        req.data += chunk;
+    });
+    req.on("end", function() {
+        req.data = JSON.parse(req.data);
+        res.sendJSON(200, user.create(req.data.name));
+    });
+  };
+
   srv.setHandler("GET", "/", srv.staticServer("index.html"));
+  srv.setHandler("POST", "/users", srv.userHandler);
   return srv;
 };
 

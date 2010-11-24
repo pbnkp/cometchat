@@ -202,6 +202,35 @@ vows.describe('Channel Fetch').addBatch({
           topic : contextFetch(),
           "Returns 403 Forbidden" : assertStatus(403)
       },
+      "" : {
+          topic : function(client) {
+              var that = this;
+              client.post("/users", {name : "channeltester"},
+                function(err, res) {
+                  that.user = JSON.parse(res.data);
+                  that.callback(err, that.user, client)
+              });
+          },
+          "GET /channels with session id" : {
+              topic : function() {
+                  this.client.get("/channels", {s : this.user.sessid},
+                                  this.callback);
+              },
+              "Returns 200 OK" : assertStatus(200),
+              "Returns an empty channel list" : function(err, res) {
+                  var data = JSON.parse(res.data);
+                  assert.isArray(data);
+                  assert.isEmpty(data);
+              }
+          },
+          "GET /channels with bad session id" : {
+              topic : function() {
+                  this.client.get("/channels", {s : 123},
+                                  this.callback);
+              },
+              "Returns 403 Forbidden" : assertStatus(403),
+          }
+      },
       teardown : function(client) {
         setTimeout(client.close, 1000);
       }

@@ -1,9 +1,10 @@
-var util = require('util');
-var createServer = require('http').createServer;
-var fs = require('fs');
-var urlParse = require('url').parse;
+var util = require('util'),
+    createServer = require('http').createServer,
+    fs = require('fs'),
+    urlParse = require('url').parse,
+    path = require('path'),
+    querystring = require('querystring');
 
-var path = require('path');
 var dn = path.dirname;
 var basedir = dn(dn(__filename));
 
@@ -11,7 +12,9 @@ var makeServer = function() {
   var handlers = {},
       errorHandlers = {},
       htdocs = fs.realpathSync( basedir + "/src/client");
-  //util.puts("HTDOCS: " + htdocs);
+
+  var channels = [],
+      sessions = {};
 
   errorHandlers[403] = function(req, res, msg) {
       res.send(403, "text/html", "Error 403 - Forbidden" + 
@@ -23,6 +26,10 @@ var makeServer = function() {
   errorHandlers[405] = function(req, res) {
       res.send(405, "text/html", "Error 405 - Method Not Allowed");
   }
+
+  var addUser = function(user) {
+      sessions[user.getSessionId()] = user;
+  };
 
   srv = createServer(function(req, res) {
     res.send = function(code, mime, data) {
@@ -76,7 +83,7 @@ var makeServer = function() {
       ".png": "image/png",
       ".js": "application/javascript"
     }[filename.substring(filename.lastIndexOf(".")).toLowerCase()] || "application/octet-stream";
-  }
+  };
 
   srv.staticServer = function(relPath) {
     return function(req, res) {
@@ -112,12 +119,25 @@ var makeServer = function() {
     });
     req.on("end", function() {
         req.data = JSON.parse(req.data);
-        res.sendJSON(200, user.create(req.data.name));
+        var newUser = user.create(req.data.name);
+        addUser(newUser);
+        res.sendJSON(200, newUser);
     });
   };
 
+  srv.isValidSession = function(sessid) {
+      return ('object' === typeof sessions[sessid]);
+  };
+
   srv.channelHandler = function(req, res) {
-      errorHandlers[403](req, res, "No session id");
+      var url = urlParse(req.url),
+          query = querystring.parse(url.query);
+      if(!query.s || !srv.isValidSession(query.s)) {
+          errorHandlers[403](req, res, "No session id");
+          return;
+      }
+
+      res.sendJSON(200, channels);
   };
 
   srv.setHandler("GET", "/", srv.staticServer("index.html"));

@@ -18,11 +18,8 @@ exports.create = function(name) {
             this.lastTime = (new Date()).getTime();
         },
         getSessionId: function() {
-            return this.sessionId;
+            return this.sessid;
         },
-        getInfo: function() {
-            return this.info;
-        }
     };
 
     return new User();

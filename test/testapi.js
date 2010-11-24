@@ -3,7 +3,8 @@ var http = require('http'),
     PORT = 9999,
     HOST = "localhost",
     chatclient = http.createClient(PORT, HOST),
-    util = require('util');
+    util = require('util'),
+    querystring = require('querystring');
 
 gently = new Gently();
 chatapi = require('server');
@@ -76,6 +77,10 @@ function Client(cb) {
     });
   }
   self.get = function(url, data, cb) {
+      if(data) {
+          data = querystring.stringify(data);
+          url += "?" + data;
+      }
       self.request("GET", url, null, cb);
   };
   self.post = function(url, data, cb) {
@@ -89,6 +94,7 @@ function Client(cb) {
 function getClient() {
     var that = this;
     var client = new Client(function() {
+      that.client = client;
       that.callback(null, client);
     });
 }
@@ -100,12 +106,12 @@ function assertStatus(code) {
 }
 
 function contextFetch(postdata) {
-    return function(client) {
+    return function() {
       var request = this.context.name.split(/ +/);
       if(postdata) {
           postdata = JSON.stringify(postdata);
       }
-      client[request[0].toLowerCase()](request[1], postdata, this.callback);
+      this.client[request[0].toLowerCase()](request[1], postdata, this.callback);
     }
 }
 

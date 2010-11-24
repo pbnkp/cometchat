@@ -13,6 +13,10 @@ var makeServer = function() {
       htdocs = fs.realpathSync( basedir + "/src/client");
   //util.puts("HTDOCS: " + htdocs);
 
+  errorHandlers[403] = function(req, res, msg) {
+      res.send(403, "text/html", "Error 403 - Forbidden" + 
+                    (msg ? ": " + msg : ""));
+  }
   errorHandlers[404] = function(req, res) {
       res.send(404, "text/html", "Error 404 - Not Found");
   }
@@ -112,8 +116,13 @@ var makeServer = function() {
     });
   };
 
+  srv.channelHandler = function(req, res) {
+      errorHandlers[403](req, res, "No session id");
+  };
+
   srv.setHandler("GET", "/", srv.staticServer("index.html"));
   srv.setHandler("POST", "/users", srv.userHandler);
+  srv.setHandler("GET", "/channels", srv.channelHandler);
   return srv;
 };
 

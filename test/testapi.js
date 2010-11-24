@@ -72,7 +72,7 @@ function Client(host, cb) {
     });
   }
   self.get = function(url, data, cb) {
-      self.request("GET", url, data, cb);
+      self.request("GET", url, null, cb);
   };
   self.post = function(url, data, cb) {
       self.request("POST", url, data, cb);
@@ -185,9 +185,18 @@ vows.describe('User Session').addBatch({
     }
 }).export(module);
 
-// Get user Session
-  // Post a username to /users
-  // Get back a session id
+vows.describe('Channel Fetch').addBatch({
+    "" : {
+      topic : getClient,
+      "GET /channels without session id" : {
+          topic : contextFetch(),
+          "Returns 403 Forbidden" : assertStatus(403)
+      },
+      teardown : function(client) {
+        setTimeout(client.close, 1000);
+      }
+    }
+}).export(module);
 
 // Get Channel list
   // Get /channels without sessid, access denied
@@ -207,3 +216,6 @@ vows.describe('User Session').addBatch({
   // Send message with one user, receive it with the other
 
 // Receive Message from Channel
+
+// Test bad data to each location (No object, bad object, etc)
+//    - Setting handlers to nonexistent functions throws 405 instead of 500

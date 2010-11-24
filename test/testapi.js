@@ -47,8 +47,9 @@ var getNextPort = (function() {
   };
 })();
 
-function Client(host, cb) {
+function Client(cb) {
   var self = this,
+      host = "localhost",
       port = getNextPort(),
       api = chatapi.makeServer(),
       client = http.createClient(port, host);
@@ -58,6 +59,9 @@ function Client(host, cb) {
     var result = "";
         req = client.request(method, url);
     if(data) {
+        if( 'string' !== typeof data) {
+            data = JSON.stringify(data);
+        }
         req.write(data);
     }
     req.end();
@@ -84,7 +88,7 @@ function Client(host, cb) {
 
 function getClient() {
     var that = this;
-    var client = new Client("localhost", function() {
+    var client = new Client(function() {
       that.callback(null, client);
     });
 }
